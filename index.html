@@ -2,8 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <!-- 关键：禁止用户缩放，确保 App 质感 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retro Collector (Custom Image Edition)</title>
+    <title>Retro Collector (Mobile Ready)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=ZCOOL+QingKe+HuangYou&family=Roboto:wght@400;700&display=swap');
@@ -18,7 +19,8 @@
             --screen-text: #4aff4a;
         }
 
-        * { box-sizing: border-box; user-select: none; -webkit-user-drag: none; touch-action: none; }
+        /* 全局禁用选中和默认触摸行为 */
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 
         body {
             margin: 0; height: 100vh; overflow: hidden;
@@ -26,12 +28,21 @@
             background-color: var(--bg-color);
             background-image: radial-gradient(circle at center, #fdf6e3 0%, #f0e6cc 100%);
             display: flex; justify-content: center; align-items: flex-end; perspective: 1000px;
+            /* 防止移动端橡皮筋滚动效果 */
+            overscroll-behavior: none;
+            touch-action: none;
         }
 
         /* === 顶部卡槽栏 === */
         .deck-container {
-            position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 4000;
+            position: absolute; 
+            top: 10px; /* 默认顶部距离 */
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 4000;
             display: flex; flex-direction: column; align-items: center; gap: 0;
+            /* 保证点击不穿透 */
+            pointer-events: auto;
         }
         .deck-bar {
             background-color: var(--case-color); padding: 15px 25px 25px 25px;
@@ -47,15 +58,15 @@
         .deck-slot::before { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 2px; height: 20px; background: rgba(0,0,0,0.1); }
 
         .confirm-btn {
-            position: relative; margin-top: -15px; padding: 10px 35px;
+            position: relative; margin-top: -15px; padding: 12px 40px; /* 加大触控区域 */
             background-color: var(--key-orange); color: var(--key-text);
             border: none; border-radius: 12px; font-family: 'ZCOOL QingKe HuangYou', sans-serif;
-            font-size: 18px; letter-spacing: 1px; cursor: pointer; pointer-events: auto; transition: all 0.05s;
+            font-size: 18px; letter-spacing: 1px; cursor: pointer; transition: all 0.05s;
             box-shadow: 0 6px 0 var(--key-dark), 0 10px 10px rgba(0,0,0,0.2), inset 2px 2px 5px rgba(255,255,255,0.4);
             z-index: 4002;
+            -webkit-tap-highlight-color: transparent; /* 去除手机点击高亮 */
         }
         .confirm-btn:active { transform: translateY(6px); box-shadow: 0 0 0 var(--key-dark), inset 0 3px 5px rgba(0,0,0,0.3); }
-        .confirm-btn:hover { filter: brightness(1.05); }
 
         /* === 隐藏导出区 === */
         #export-stage {
@@ -70,7 +81,7 @@
         }
         .export-card img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* === 卡牌样式 (纯净版) === */
+        /* === 卡牌样式 === */
         .card-container {
             position: absolute; width: 220px; height: 310px; 
             background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -78,12 +89,10 @@
             transform-origin: center center; cursor: grab;
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.4s, left 0.4s, box-shadow 0.2s;
             z-index: 10;
+            /* 优化触摸 */
+            touch-action: none; 
         }
-        
-        .card-container img {
-            width: 100%; height: 100%; object-fit: cover; pointer-events: none; display: block;
-        }
-
+        .card-container img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; display: block; }
         .card-container.in-slot { box-shadow: none; cursor: grab; z-index: 4001 !important; }
         .card-container:active { cursor: grabbing; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 5000 !important; }
         .card-container.no-transition { transition: none !important; }
@@ -92,6 +101,7 @@
         .computer-wrapper {
             position: relative; width: 680px; height: auto; z-index: 2000; margin-bottom: 20px;
             display: flex; flex-direction: column; align-items: center; transform-style: preserve-3d;
+            transform-origin: bottom center; /* 缩放基点在底部 */
         }
         .monitor-unit {
             width: 90%; height: 160px; background: var(--case-color); border-radius: 20px 20px 0 0;
@@ -127,6 +137,7 @@
             box-shadow: 0 4px 0 var(--key-dark), 0 5px 5px rgba(0,0,0,0.2); color: var(--key-text); font-weight: bold; font-size: 12px;
             display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.05s, box-shadow 0.05s;
             flex: 1; backface-visibility: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .key.func { background: #b0bec5; color: #333; box-shadow: 0 4px 0 #78909c, 0 5px 5px rgba(0,0,0,0.2); font-size: 10px; }
         .key.enter { background: #e67e22; color: white; box-shadow: 0 4px 0 #d35400, 0 5px 5px rgba(0,0,0,0.2); flex: 1.8; }
@@ -136,10 +147,39 @@
         #real-input { position: absolute; opacity: 0; top: -1000px; }
         #spawn-slot { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); width: 300px; height: 10px; z-index: -1; }
 
-        @media (max-width: 700px) {
-            .computer-wrapper { width: 95%; transform: scale(0.7); transform-origin: bottom center; margin-bottom: -40px; }
-            .key { height: 35px; font-size: 10px; }
-            .deck-container { transform: translateX(-50%) scale(0.8); transform-origin: top center; }
+        /* === 关键：响应式适配 === */
+        @media (max-width: 768px) {
+            /* 1. 电脑主体自动缩放 */
+            .computer-wrapper {
+                /* 让电脑宽度适配屏幕，留出左右边距 */
+                width: 95vw; 
+                /* 因为内部元素是固定 px，我们需要用 zoom 或 scale 来缩小 */
+                /* 计算比例：屏幕宽 / 680px (原始宽) */
+                transform: scale(0.55); 
+                margin-bottom: -10px;
+            }
+
+            /* 2. 顶部卡槽栏缩小并下移 (避开刘海) */
+            .deck-container {
+                top: 30px; /* 给 iPhone 刘海留位置 */
+                transform: translateX(-50%) scale(0.65);
+                transform-origin: top center;
+                width: max-content;
+            }
+
+            /* 3. 调整卡牌生成的初始位置 */
+            #spawn-slot {
+                top: 120px;
+            }
+
+            /* 4. 卡牌在手机上稍微小一点 */
+            .card-container {
+                transform: scale(0.8); 
+            }
+            
+            /* 修复虚拟键盘高度 */
+            .key { height: 38px; font-size: 14px; }
+            .crt { font-size: 18px; }
         }
     </style>
 </head>
@@ -191,21 +231,18 @@
     </div>
 
     <script>
-        // === 自定义图片映射 (新增皮卡丘和鲤鱼王) ===
         const customImages = {
             "umbreon": "https://i.imgur.com/SaBap0D.jpeg",
             "pikachu": "https://i.imgur.com/5IqB096.jpeg",
             "magikarp": "https://i.imgur.com/JrMGOln.jpeg"
         };
 
-        // === 中文映射表 ===
         const cnMap = {
             "妙蛙种子": "bulbasaur", "小火龙": "charmander", "喷火龙": "charizard",
             "杰尼龟": "squirtle", "皮卡丘": "pikachu", "雷丘": "raichu",
             "超梦": "mewtwo", "梦幻": "mew", "耿鬼": "gengar", "伊布": "eevee", 
             "鲤鱼王": "magikarp", "暴鲤龙": "gyarados",
             "月亮伊布": "umbreon", "月亮精灵": "umbreon"
-            // ... 其他 151 只宝可梦依然可以通过英文ID搜索
         };
         
         const typeColors = { normal: '#A8A77A', fire: '#EE8130', water: '#6390F0', electric: '#F7D02C', grass: '#7AC74C', ice: '#96D9D6', fighting: '#C22E28', poison: '#A33EA1', ground: '#E2BF65', flying: '#A98FF3', psychic: '#F95587', bug: '#A6B91A', rock: '#B6A136', ghost: '#735797', dragon: '#6F35FC', dark: '#705746', steel: '#B7B7CE', fairy: '#D685AD' };
@@ -226,8 +263,24 @@
         });
         document.addEventListener('keyup', () => visualKeys.forEach(k => k.classList.remove('pressed')));
         visualKeys.forEach(btn => {
-            btn.addEventListener('mousedown', (e) => { e.stopPropagation(); btn.classList.add('pressed'); const val = btn.dataset.key; if(val==='Enter') startGeneration(); else if(val==='Backspace') realInput.value=realInput.value.slice(0,-1); else if(val===' ') realInput.value+=' '; else if(val.length===1) realInput.value+=val; screenDisplay.textContent=realInput.value.toUpperCase()+"_"; });
-            btn.addEventListener('mouseup', () => btn.classList.remove('pressed'));
+            // mousedown 改为 touchstart 兼容更好的触控响应
+            const handlePress = (e) => { 
+                // e.preventDefault(); // 不阻止默认，否则可能无法滚动或触发输入框失焦逻辑，视情况而定
+                e.stopPropagation();
+                btn.classList.add('pressed'); 
+                const val = btn.dataset.key; 
+                if(val==='Enter') startGeneration(); 
+                else if(val==='Backspace') realInput.value=realInput.value.slice(0,-1); 
+                else if(val===' ') realInput.value+=' '; 
+                else if(val.length===1) realInput.value+=val; 
+                screenDisplay.textContent=realInput.value.toUpperCase()+"_"; 
+            };
+            btn.addEventListener('mousedown', handlePress);
+            btn.addEventListener('touchstart', handlePress, {passive: true});
+            
+            const handleRelease = () => btn.classList.remove('pressed');
+            btn.addEventListener('mouseup', handleRelease);
+            btn.addEventListener('touchend', handleRelease);
         });
 
         async function startGeneration() {
@@ -253,39 +306,38 @@
             const card = document.createElement('div');
             card.className = 'card-container';
             
-            // === 图片逻辑 ===
             let imgUrl = data.sprites.other['official-artwork'].front_default || data.sprites.front_default;
-            // 检查是否有自定义图片
             if (customImages[data.name]) {
                 imgUrl = customImages[data.name];
             }
 
-            card.dataset.imgUrl = imgUrl; // 导出用
-            
-            // 纯净卡牌 HTML
+            card.dataset.imgUrl = imgUrl; 
             card.innerHTML = `<img src="${imgUrl}" crossorigin="anonymous">`;
 
-            // 兜底背景色
             const color = typeColors[data.types[0].type.name] || '#eee';
             card.style.backgroundColor = color;
 
             document.body.appendChild(card);
             
-            const slotRect = document.getElementById('spawn-slot').getBoundingClientRect();
-            const cardRect = card.getBoundingClientRect();
-            const startX = slotRect.left + (slotRect.width/2) - (cardRect.width/2);
-            const startY = slotRect.top;
+            // 修复手机端生成位置：获取缩放后的 computer-wrapper 的相对位置
+            // 简单方案：直接固定在屏幕下方一定比例
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            // 假设出卡口在屏幕中间偏下
+            const startX = winW / 2 - 110; // 220/2
+            const startY = winH - 300; // 键盘上方
+
             card.classList.add('no-transition');
             card.style.left = `${startX}px`; card.style.top = `${startY}px`;
-            card.style.transform = `scale(0.8)`;
+            card.style.transform = `scale(0.5)`;
             void card.offsetWidth;
             card.classList.remove('no-transition');
             
             setTimeout(() => {
-                const endY = startY - 250 - Math.random()*50;
-                const endX = startX + (Math.random()*200 - 100);
+                const endY = startY - 200 - Math.random()*50;
+                const endX = startX + (Math.random()*150 - 75);
                 card.style.left = `${endX}px`; card.style.top = `${endY}px`;
-                card.style.transform = `scale(1) rotate(${(Math.random()*20)-10}deg)`;
+                card.style.transform = `scale(0.8) rotate(${(Math.random()*20)-10}deg)`; // 手机端默认缩小一点 0.8
                 setTimeout(() => { isProcessing = false; screenDisplay.textContent = "系统就绪"; makeDraggable(card); }, 500);
             }, 50);
         }
@@ -293,9 +345,11 @@
         function makeDraggable(el) {
             let isDragging = false;
             let startX, startY, initialLeft, initialTop;
+            
+            // 统一处理 Touch 和 Mouse
             const onStart = (cx, cy) => {
                 isDragging = true; el.style.zIndex = 5000; el.classList.add('no-transition');
-                if(el.classList.contains('in-slot')) el.style.transform = `scale(1)`;
+                if(el.classList.contains('in-slot')) el.style.transform = `scale(0.8)`; // 拖出来恢复到手机端的默认大小
                 startX = cx; startY = cy;
                 const style = window.getComputedStyle(el);
                 initialLeft = parseFloat(style.left); initialTop = parseFloat(style.top);
@@ -307,9 +361,12 @@
             const onEnd = () => {
                 if(isDragging) { isDragging = false; el.classList.remove('no-transition'); checkSlot(el); }
             };
+            
+            // Mouse
             el.addEventListener('mousedown', e=>onStart(e.clientX, e.clientY));
             window.addEventListener('mousemove', e=>onMove(e.clientX, e.clientY));
             window.addEventListener('mouseup', onEnd);
+            // Touch
             el.addEventListener('touchstart', e=>onStart(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
             window.addEventListener('touchmove', e=>{if(isDragging){e.preventDefault();onMove(e.touches[0].clientX,e.touches[0].clientY)}}, {passive:false});
             window.addEventListener('touchend', onEnd);
@@ -322,6 +379,7 @@
             let matched = false;
             deckSlots.forEach(slot => {
                 const sr = slot.getBoundingClientRect();
+                // 增加判定范围
                 if(cx > sr.left && cx < sr.right && cy > sr.top && cy < sr.bottom) {
                     const tx = sr.left + (sr.width/2) - (220/2);
                     const ty = sr.top + (sr.height/2) - (310/2);
@@ -333,7 +391,7 @@
                 }
             });
             if(!matched && card.classList.contains('in-slot')) {
-                card.classList.remove('in-slot'); card.style.transform = `scale(1) rotate(${(Math.random()*20)-10}deg)`;
+                card.classList.remove('in-slot'); card.style.transform = `scale(0.8) rotate(${(Math.random()*20)-10}deg)`;
                 card.style.zIndex = 100; deckSlots.forEach(s => { if(s.dataset.element === card) delete s.dataset.element; });
             }
         }
@@ -343,6 +401,7 @@
             stage.innerHTML = '';
             const cardsInSlots = [];
             deckSlots.forEach(slot => {
+                // 使用保存的引用最准确，但为了鲁棒性，还是结合位置判断
                 const sr = slot.getBoundingClientRect();
                 const scx = sr.left + sr.width/2;
                 const scy = sr.top + sr.height/2;
@@ -350,7 +409,8 @@
                     const cr = c.getBoundingClientRect();
                     const ccx = cr.left + cr.width/2;
                     const ccy = cr.top + cr.height/2;
-                    return Math.abs(ccx - scx) < 10 && Math.abs(ccy - scy) < 10;
+                    // 宽松判定
+                    return Math.abs(ccx - scx) < 20 && Math.abs(ccy - scy) < 20;
                 });
                 if(card) cardsInSlots.push(card.dataset.imgUrl);
                 else cardsInSlots.push(null);
